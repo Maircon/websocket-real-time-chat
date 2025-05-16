@@ -107,22 +107,33 @@ app.post('/logout', async (req, res) => {
 })
 
 io.on('connection', (socket) => {
-  console.log('client connected')
-  
-  socket.on('disconnect', () => {
-    console.log('client has disconected')
-  })
+  console.log("client connected");
 
-  socket.on('message', (mss) => {
+  socket.on("disconnect", () => {
+    console.log("client has disconected");
+  });
+
+  socket.on("message_1", (mss) => {
     console.log({
       user: socket.handshake.auth.user.name,
-      message: mss
-    })
-    io.emit('message', {
+      message: mss,
+    });
+    io.emit("message_1", {
       user: secureProps(socket.handshake.auth.user),
-      message: mss
-    })
-  })
+      message: mss,
+    });
+  });
+
+  socket.on("message_2", (mss) => {
+    console.log({
+      user: socket.handshake.auth.user.name,
+      message: mss,
+    });
+    io.emit("message_2", {
+      user: secureProps(socket.handshake.auth.user),
+      message: mss,
+    });
+  });
 })
 
 server.listen(port, () => {
