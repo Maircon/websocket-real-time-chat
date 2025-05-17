@@ -15,126 +15,141 @@ const io = new Server(server, {
   }
 })
 
+const log = (message) => {
+  console.log({ ...message });
+};
+
 const users = [
   {
     id: 1,
-    avatarUrl: 'https://img.odcdn.com.br/wp-content/uploads/2024/01/avatar-netlfix.jpg',
-    name: 'Aang',
-    meta: 'Mestre do Ar',
+    avatarUrl:
+      "https://img.odcdn.com.br/wp-content/uploads/2024/01/avatar-netlfix.jpg",
+    name: "Aang",
+    meta: "Mestre do Ar",
     auth: false,
-    token: ''
+    token: "",
   },
   {
     id: 2,
-    avatarUrl: 'https://i.pinimg.com/564x/77/7a/79/777a7988329ae744d4a848f57d1bfb0b.jpg',
-    name: 'Lol Player',
-    meta: 'Gamer',
+    avatarUrl:
+      "https://i.pinimg.com/564x/77/7a/79/777a7988329ae744d4a848f57d1bfb0b.jpg",
+    name: "Lol Player",
+    meta: "Gamer",
     auth: false,
-    token: ''
+    token: "",
   },
   {
     id: 3,
-    avatarUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ_F8iednF2gipQEy_1q7dUiAGQA5nARfUJZw&s',
-    name: 'Dota Player',
-    meta: 'Gamer',
+    avatarUrl:
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ_F8iednF2gipQEy_1q7dUiAGQA5nARfUJZw&s",
+    name: "Dota Player",
+    meta: "Gamer",
     auth: false,
-    token: ''
-  }
-]
+    token: "",
+  },
+];
 
 const secureProps = (user) => ({
   id: user.id,
   avatarUrl: user.avatarUrl,
   name: user.name,
-  meta: user.meta
-})
+  meta: user.meta,
+});
 
 const sleep = () => {
-  return new Promise(resolve => new setTimeout(() => resolve(), 5000))
-}
+  return new Promise((resolve) => new setTimeout(() => resolve(), 5000));
+};
 
-const __dirname  = dirname(fileURLToPath(import.meta.url))
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
-app.use(cors())
-app.use(express.json())
+app.use(cors());
+app.use(express.json());
 io.use((socket, next) => {
-  const token = socket.handshake.auth.token
-  const user = users.find(user => user.token === token)
+  const token = socket.handshake.auth.token;
+  const user = users.find((user) => user.token === token);
   if (!user) {
-    return next(new Error('Unauthorized'))
+    return next(new Error("Unauthorized"));
   }
-  socket.handshake.auth.user = user
-  next()
-})
+  socket.handshake.auth.user = user;
+  next();
+});
 
-app.get('/me', (req, res) => {
-  const {
-    token
-  } = req.body
-  const user = users.find(user => !user.token === token)
-  res.send(user)
-})
+app.get("/me", (req, res) => {
+  const { token } = req.body;
+  const user = users.find((user) => !user.token === token);
+  res.send(user);
+});
 
-app.get('/hello-world', async (req, res) => {
-  console.log('received', Date.now())
-  await sleep()
-  res.send({ message: 'hello-world' })
-})
+app.get("/hello-world", async (req, res) => {
+  console.log("received", Date.now());
+  await sleep();
+  res.send({ message: "hello-world" });
+});
 
-app.post('/auth', async (req, res) => {
-  const user = users.find(user => !user.auth)
+app.post("/auth", async (req, res) => {
+  const user = users.find((user) => !user.auth);
   if (!user) {
-    return res.status(500).send({ error: true, message: 'usuario nao existe' })
+    return res.status(500).send({ error: true, message: "usuario nao existe" });
   }
-  const token = crypto.randomBytes(16).toString('hex')
-  user.auth = true
-  user.token = token
-  res.send({ token: user.token })
-})
+  const token = crypto.randomBytes(16).toString("hex");
+  user.auth = true;
+  user.token = token;
+  res.send({ token: user.token });
+});
 
-app.post('/logout', async (req, res) => {
-  console.log(req.body)
-  const {
-    token
-  } = req.body
-  const user = users.find(user => user.token === token)
+app.post("/logout", async (req, res) => {
+  console.log(req.body);
+  const { token } = req.body;
+  const user = users.find((user) => user.token === token);
   if (!user) {
-    return res.status(500).send({ error: true, message: 'usuario nao existe' })
+    return res.status(500).send({ error: true, message: "usuario nao existe" });
   }
-  user.auth = false
-  user.token = ''
-  res.send({ success: true })
-})
+  user.auth = false;
+  user.token = "";
+  res.send({ success: true });
+});
 
-io.on('connection', (socket) => {
+io.on("connection", (socket) => {
   console.log("client connected");
 
   socket.on("disconnect", () => {
     console.log("client has disconected");
   });
 
-  socket.on("message_1", (mss) => {
-    console.log({
+  socket.on("joinRoom", (mss) => {
+    const { roomId } = mss;
+    socket.join(roomId);
+    log({
+      event: "joinRoom",
       user: socket.handshake.auth.user.name,
-      message: mss,
-    });
-    io.emit("message_1", {
-      user: secureProps(socket.handshake.auth.user),
-      message: mss,
+      roomId,
+      joinedRooms: socket.rooms,
     });
   });
 
-  socket.on("message_2", (mss) => {
-    console.log({
+  socket.on("leaveRoom", (mss) => {
+    const { roomId } = mss;
+    socket.leave(roomId);
+    log({
+      event: "leaveRoom",
+      user: socket.handshake.auth.user.name,
+      roomId,
+      joinedRooms: socket.rooms,
+    });
+  });
+
+  socket.on("message", (mss) => {
+    log({
       user: socket.handshake.auth.user.name,
       message: mss,
     });
-    io.emit("message_2", {
+    const { roomId, text } = mss;
+    io.to(roomId).emit("message", {
       user: secureProps(socket.handshake.auth.user),
-      message: mss,
+      message: text,
     });
   });
-})
+});
 
 server.listen(port, () => {
   console.log(`App is running over port ${port}`)
