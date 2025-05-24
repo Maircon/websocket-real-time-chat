@@ -8,7 +8,7 @@ export class AuthUseCase {
     const users = this.userRepository.getUsers();
     const user = users.find((user) => !user.auth);
     if (!user) {
-      return res.status(500).send({ error: true, message: "usuario nao existe" });
+      throw new Error("user not found");
     }
     const token = this.hashProvider.hash()
     user.auth = true;

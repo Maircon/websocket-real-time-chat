@@ -5,8 +5,12 @@ export class AuthController {
   }
 
   login (req, res) {
-    const user = this.authUseCase.exec()
-    res.send({ token: user.token });
+    try {
+      const user = this.authUseCase.exec();
+      res.send({ token: user.token });
+    } catch (err) {
+      res.status(500).send({ message: err.message });
+    }
   }
 
   async logout (req, res) {
