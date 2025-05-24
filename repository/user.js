@@ -28,14 +28,12 @@ const users = [
   },
 ];
 
-class UserRepository {
+export class UserRepository {
   getUsers() {
-    return users
+    return users;
   }
 
   getUser(userId) {
-    return users.find(user => user.id === userId)
+    return users.find((user) => user.id === userId);
   }
 }
-
-export default new UserRepository()
